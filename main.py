@@ -2,6 +2,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
+import hashlib
 from datetime import datetime
 
 from config import get_settings
@@ -73,10 +74,17 @@ async def scam_detection_endpoint(
             )
         
         # Step 2: Get or create session
-        session_id = get_session_id(
-            request.message.sender,
-            request.message.timestamp
-        )
+        # Use robust hash-based session ID generation
+        try:
+            timestamp_str = str(request.message.timestamp)
+            unique_key = f"{request.message.sender}_{timestamp_str}"
+            session_id = hashlib.md5(unique_key.encode()).hexdigest()[:16]
+        except Exception as e:
+            # Fallback to current time
+            session_id = hashlib.md5(
+                f"{request.message.sender}_{datetime.now().isoformat()}".encode()
+            ).hexdigest()[:16]
+
         session = load_session(session_id) or initialize_session(session_id)
         session["turn_count"] += 1
         
