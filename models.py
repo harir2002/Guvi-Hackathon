@@ -5,7 +5,7 @@ from datetime import datetime
 class Message(BaseModel):
     sender: str = Field(..., description="Either 'scammer' or 'user'")
     text: str = Field(..., description="Message content")
-    timestamp: str = Field(..., description="ISO-8601 timestamp")
+    timestamp: Optional[str] = Field(default_factory=lambda: datetime.now().isoformat(), description="ISO-8601 timestamp")
 
 class Metadata(BaseModel):
     channel: Optional[str] = Field(None, description="SMS, WhatsApp, Email, Chat")
@@ -14,8 +14,11 @@ class Metadata(BaseModel):
 
 class ScamDetectionRequest(BaseModel):
     message: Message
-    conversationHistory: List[Message] = Field(default_factory=list)
+    conversationHistory: Optional[List[Message]] = Field(default_factory=list)
     metadata: Optional[Metadata] = None
+
+    class Config:
+        extra = "ignore"
 
 class EngagementMetrics(BaseModel):
     engagementDurationSeconds: int
