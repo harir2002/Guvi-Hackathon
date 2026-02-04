@@ -1,24 +1,27 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from pydantic import BaseModel, Field, ConfigDict
+from typing import List, Optional, Dict, Union, Any
 from datetime import datetime
 
 class Message(BaseModel):
     sender: str = Field(..., description="Either 'scammer' or 'user'")
-    text: str = Field(..., description="Message content")
-    timestamp: Optional[str] = Field(default_factory=lambda: datetime.now().isoformat(), description="ISO-8601 timestamp")
+    text: str = Field(..., alias="content", description="Message content")
+    timestamp: Optional[Union[str, float, int]] = Field(default_factory=lambda: datetime.now().isoformat(), description="ISO-8601 timestamp")
+
+    model_config = ConfigDict(populate_by_name=True, extra='ignore')
 
 class Metadata(BaseModel):
     channel: Optional[str] = Field(None, description="SMS, WhatsApp, Email, Chat")
     language: Optional[str] = Field("English", description="Language of conversation")
     locale: Optional[str] = Field("IN", description="Country/region code")
 
+    model_config = ConfigDict(populate_by_name=True, extra='ignore')
+
 class ScamDetectionRequest(BaseModel):
     message: Message
-    conversationHistory: Optional[List[Message]] = Field(default_factory=list)
+    conversationHistory: Optional[List[Message]] = Field(default_factory=list, alias="conversation_history")
     metadata: Optional[Metadata] = None
 
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(populate_by_name=True, extra='ignore')
 
 class EngagementMetrics(BaseModel):
     engagementDurationSeconds: int
